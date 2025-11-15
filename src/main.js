@@ -7,8 +7,8 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 //Scene en camera
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-camera.position.set(10, 5, 24); //outside house
-// camera.position.set(6, 2.3, 3); //in house
+// camera.position.set(-2, 3, 16); //outside house
+camera.position.set(6, 2.3, 3); //in house
 
 //Background
 const backgroundTexture = new THREE.TextureLoader().load('./images/spacebackground.jpg');
@@ -22,17 +22,27 @@ const paintingTexture = new THREE.TextureLoader().load('./images/pixel-avatar.jp
 const floorTexture = new THREE.TextureLoader().load('./images/floorTexture.jpg');
 
 //Light setup
-const light = new THREE.AmbientLight( 0x404040 ); // soft white light
+const light = new THREE.AmbientLight( 0x404040 );
 light.intensity = 16;
-scene.add( light ); //licht overal
+scene.add( light );
 
-const pointLight = new THREE.PointLight(0xffffff, 20, 100);
-pointLight.position.set(0, 2, 0);
-pointLight.castShadow = true;
-scene.add(pointLight);
+const insideLight = new THREE.SpotLight(0xffffff, 20, 50, Math.PI/3, 0.5, 1);
+insideLight.position.set(0, 2, 0);
+insideLight.castShadow = true;
+scene.add(insideLight);
 
-const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2);
-scene.add(pointLightHelper);
+const outsideLight1 = new THREE.SpotLight(0xffffff, 3, 50, Math.PI/6, 0.3, 1);
+outsideLight1.position.set(-5, 2, 6.2);
+outsideLight1.target.position.set(-5, 0, 6.2);
+scene.add(outsideLight1.target);
+scene.add(outsideLight1);
+
+const outsideLight2= new THREE.SpotLight(0xffffff, 3, 50, Math.PI/6, 0.3, 1);
+outsideLight2.position.set(-1, 2, 6.2);
+outsideLight2.target.position.set(-1, 0, 6.2);
+scene.add(outsideLight2.target);
+scene.add(outsideLight2);
+
 
 // Geometry //
 //Grass
@@ -96,6 +106,15 @@ door.rotation.y = Math.PI / 0.3;
 door.position.set(3.4, 0, 6.4);
 scene.add( door );
 
+const doorHandleGeometry = new THREE.SphereGeometry(0.2, 32, 32, 0, Math.PI, 0, Math.PI);
+const doorHandleMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffff00,
+})
+const doorHandle = new THREE.Mesh(doorHandleGeometry, doorHandleMaterial)
+doorHandle.position.set(3, -0.2, 7.2);
+doorHandle.rotation.y = Math.PI / -0.6;
+scene.add( doorHandle );
+
 //Roof
 const roofGeometry = new THREE.ConeGeometry( 11.5, 2, 4, 10, true );
 const roofMaterial = new THREE.MeshStandardMaterial({ 
@@ -124,31 +143,41 @@ const balustrade = new THREE.Mesh(balustradeGeometry, balustradeMaterial)
 balustrade.position.set(-7.5, 0, 7.5);
 scene.add( balustrade );
 
-//Lamp
-const lampGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-const lampMaterial = new THREE.MeshStandardMaterial({
-  emissive: 0xe0d263,
-  emissiveIntensity: 2,
-})
-const lamp = new THREE.Mesh(lampGeometry, lampMaterial)
-lamp.position.set(0, 2, 0);
-scene.add( lamp );
+function createLamp(scene, x, y, z) {
+  const lampGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+  const lampMaterial = new THREE.MeshStandardMaterial({
+    emissive: 0xe0d263,
+    emissiveIntensity: 2,
+  });
 
-const lampHolderGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1, 32);
-const lampHolderMaterial = new THREE.MeshStandardMaterial({
-  color: 0x333333,
-})
-const lampHolder = new THREE.Mesh(lampHolderGeometry, lampHolderMaterial)
-lampHolder.position.set(0, 2.6, 0);
-scene.add( lampHolder );
+  const lampHolderGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1, 32);
+  const lampHolderMaterial = new THREE.MeshStandardMaterial({
+    color: 0x333333,
+  });
 
-const lampCapGeometry = new THREE.ConeGeometry(0.6, 0.5, 32,);
-const lampCapMaterial = new THREE.MeshStandardMaterial({
-  color: 0x333333,
-})
-const lampCap = new THREE.Mesh(lampCapGeometry, lampCapMaterial)
-lampCap.position.set(0, 2.25, 0);
-scene.add( lampCap );
+  const lampCapGeometry = new THREE.ConeGeometry(0.6, 0.5, 32);
+  const lampCapMaterial = new THREE.MeshStandardMaterial({
+    color: 0x333333,
+  });
+
+  const lamp = new THREE.Mesh(lampGeometry, lampMaterial);
+  lamp.position.set(x, y, z);
+  scene.add(lamp);
+
+  const lampHolder = new THREE.Mesh(lampHolderGeometry, lampHolderMaterial);
+  lampHolder.position.set(x, y + 0.6, z);
+  scene.add(lampHolder);
+
+  const lampCap = new THREE.Mesh(lampCapGeometry, lampCapMaterial);
+  lampCap.position.set(x, y + 0.25, z);
+  scene.add(lampCap);
+
+  return { lamp, lampHolder, lampCap };
+}
+
+const insideLamp = createLamp(scene, 0, 2, 0);
+const outsideLamp1 = createLamp(scene, -5, 2, 6.2);
+const outsideLamp2 = createLamp(scene, -1, 2, 6.2);
 
 //Painting
 const paintingGeometry = new THREE.PlaneGeometry(3, 3);
